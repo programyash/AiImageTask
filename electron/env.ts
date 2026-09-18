@@ -10,6 +10,16 @@ import fs from 'node:fs';
 import { app } from 'electron';
 import { config as loadDotenv } from 'dotenv';
 
+/**
+ * API key compiled into the production bundle by scripts/esbuild.config.mjs
+ * (from the project's .env at build time). Empty string in development and
+ * when no key was available at build time. A run-time .env or OS environment
+ * variable always takes precedence over this value.
+ */
+declare const __BUNDLED_GEMINI_API_KEY__: string;
+const BUNDLED_API_KEY: string =
+  typeof __BUNDLED_GEMINI_API_KEY__ === 'string' ? __BUNDLED_GEMINI_API_KEY__ : '';
+
 export const DEFAULT_MODEL = 'gemini-2.5-flash';
 
 /**
@@ -76,10 +86,13 @@ export function loadEnvironment(): { loadedFrom: string | null } {
   return { loadedFrom: resolvedEnvPath };
 }
 
-/** The API key, or null when it is absent/blank. Main process only. */
+/**
+ * The API key, or null when it is absent/blank. Main process only.
+ * Resolution order: OS environment / run-time .env, then the key bundled at build time.
+ */
 export function getApiKey(): string | null {
   loadEnvironment();
-  const key = process.env.GEMINI_API_KEY?.trim();
+  const key = process.env.GEMINI_API_KEY?.trim() || BUNDLED_API_KEY.trim();
   if (!key) return null;
   // Guard against someone pasting the placeholder from .env.example.
   if (/^(your_gemini_api_key_here|YOUR_NEW_KEY_HERE)$/i.test(key)) return null;

@@ -6,8 +6,26 @@
  */
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import fs from 'node:fs';
+import { parse as parseDotenv } from 'dotenv';
 
 export const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+/**
+ * Reads GEMINI_API_KEY from the project's `.env` (or the build shell) so it can
+ * be compiled into the production main-process bundle. This lets end users
+ * install the packaged app and use it immediately without configuring a key.
+ *
+ * Only done for production builds; in dev the key is read at run time as usual.
+ * Returns an empty string when no key is available so the build still succeeds.
+ */
+function readBundledApiKey() {
+  if (process.env.GEMINI_API_KEY?.trim()) return process.env.GEMINI_API_KEY.trim();
+  const envPath = path.join(projectRoot, '.env');
+  if (!fs.existsSync(envPath)) return '';
+  const parsed = parseDotenv(fs.readFileSync(envPath));
+  return parsed.GEMINI_API_KEY?.trim() ?? '';
+}
 
 /**
  * @param {{ watch?: boolean }} [options]
@@ -15,6 +33,14 @@ export const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.u
  */
 export function createElectronBuildOptions({ watch = false } = {}) {
   const isProduction = !watch;
+  const bundledKey = isProduction ? readBundledApiKey() : '';
+  if (isProduction) {
+    console.log(
+      bundledKey
+        ? '[esbuild] GEMINI_API_KEY found - bundling it into the packaged app'
+        : '[esbuild] WARNING: no GEMINI_API_KEY in .env - packaged app will need a key at run time',
+    );
+  }
 
   return {
     entryPoints: [
@@ -37,6 +63,7 @@ export function createElectronBuildOptions({ watch = false } = {}) {
     logLevel: 'info',
     define: {
       'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development'),
+      __BUNDLED_GEMINI_API_KEY__: JSON.stringify(bundledKey),
     },
   };
 }

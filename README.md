@@ -196,7 +196,7 @@ Error messages are sanitised before they cross to the UI (`electron/errors.ts`):
 - A strict Content-Security-Policy in production (`default-src 'none'`, `connect-src 'none'`): the renderer has no network access at all - every request to Gemini goes through the main process.
 - IPC handlers verify the sender frame is our own window before doing work, and the main process re-validates the payload (type, size, base64 shape) rather than trusting the renderer.
 
-`.env` is gitignored, and electron-builder's `files` list only includes the built bundles, so a `.env` in the project folder is never packaged into the installer.
+`.env` is gitignored, and electron-builder's `files` list only includes the built bundles, so the `.env` file itself is never packaged. The key *value* is compiled into the main-process bundle at build time (see "Using the packaged app") so end users need no setup; it still never reaches the renderer.
 
 ## How the analysis works
 
