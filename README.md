@@ -158,13 +158,21 @@ npm run dist       # build + package: release/AI Image Analyzer-1.0.0-x64-Setup.
 
 ### Using the packaged app
 
-The packaged app looks for `.env` in this order and uses the first one it finds:
+**End users do not need to configure anything.** When `npm run dist` runs, the build reads `GEMINI_API_KEY` from the project's `.env` (or the build shell) and compiles it into the main-process bundle inside `app.asar`. Anyone who installs the resulting Setup/Portable `.exe` can analyze images immediately with that key.
 
-1. next to `AI Image Analyzer.exe`
-2. in the app's `resources/` folder
-3. in `%APPDATA%\ai-image-analyzer\`
+> Because the key ships inside the installer, treat it as semi-public: set a spending/quota cap on it in Google AI Studio and rotate it if the installer is distributed widely.
 
-A `GEMINI_API_KEY` set in the Windows environment always takes precedence over a file. If no key is found, the app starts normally and shows a banner explaining where to put it.
+If you want to build *without* a bundled key, remove `GEMINI_API_KEY` from `.env` before running `npm run dist`; the build prints a warning and the app falls back to run-time lookup.
+
+To override the bundled key on a given machine, the app checks these in order and uses the first one it finds:
+
+1. a `GEMINI_API_KEY` Windows environment variable
+2. `.env` next to `AI Image Analyzer.exe`
+3. `.env` in the app's `resources/` folder
+4. `.env` in `%APPDATA%\ai-image-analyzer\`
+5. the key bundled at build time
+
+If none of these yields a key, the app starts normally and shows a banner explaining where to put one.
 
 ### All scripts
 
