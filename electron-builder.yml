@@ -1,0 +1,52 @@
+# electron-builder configuration.
+# Run `npm run dist` to produce a Windows installer + portable executable in release/.
+
+appId: com.aiimageanalyzer.app
+productName: AI Image Analyzer
+copyright: Copyright (c) 2026 AI Image Analyzer
+
+directories:
+  output: release
+  buildResources: build
+
+# The renderer bundle, the compiled main/preload, and package.json.
+# electron-builder adds the production `dependencies` from node_modules
+# automatically; devDependencies are never copied.
+files:
+  - dist/**/*
+  - dist-electron/**/*
+  - package.json
+
+# Placed next to the executable's resources so the app can use it as a window icon.
+extraResources:
+  - from: build/icon.ico
+    to: icon.ico
+
+asar: true
+# No native modules are used, so there is nothing to rebuild.
+npmRebuild: false
+nodeGypRebuild: false
+
+win:
+  icon: build/icon.ico
+  artifactName: ${productName}-${version}-${arch}-Setup.${ext}
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: portable
+      arch:
+        - x64
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowElevation: true
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: AI Image Analyzer
+  deleteAppDataOnUninstall: false
+
+portable:
+  artifactName: ${productName}-${version}-${arch}-Portable.${ext}
